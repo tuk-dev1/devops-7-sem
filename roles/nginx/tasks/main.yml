@@ -1,0 +1,25 @@
+---
+- name: Install Nginx
+  apt:
+    name: nginx
+    state: present
+    update_cache: yes
+
+- name: Ensure Nginx is running
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: Deploy Nginx configuration
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+  notify: Validate Nginx configuration
+
+- name: Create directory for static files
+  file:
+    path: "{{ nginx_static_dir }}"
+    state: directory
+    owner: www-data
+    group: www-data

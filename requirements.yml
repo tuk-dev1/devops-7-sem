@@ -1,0 +1,12 @@
+---
+roles:
+  - name: docker
+    src: https://github.com/tuk-dev1/Docker.git
+    scm: git
+    version: main
+    
+  - name: nginx
+    src: https://github.com/tuk-dev1/nginx.git
+    scm: git
+    version: main
+  
