@@ -1,0 +1,69 @@
+---
+- hosts: app
+  become: yes
+  tasks:
+    - name: Install Docker apt key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        state: present
+        update_cache: yes
+
+    - name: Install Docker packages
+      package:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: yes
+
+    - name: Ensure Docker service is running
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Clone Django application repository
+      git:
+        repo: 'https://github.com/mdn/django-locallibrary-tutorial'
+        dest: /tmp/django_app
+        version: HEAD
+
+    - name: Start PostgreSQL container
+      docker_container:
+        name: locallibrary_db
+        image: postgres:13
+        env:
+          POSTGRES_DB: locallibrary
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+        volumes:
+          - locallibrary_data:/var/lib/postgresql/data
+        state: started
+        restart_policy: always
+        published_ports:
+          - "5432:5432"
+
+    - name: Start Django container
+      docker_container:
+        name: locallibrary_web
+        image: timurbabs/django
+        command: python3 /app/manage.py runserver 0.0.0.0:8000
+        volumes:
+          - /tmp/django_app:/app
+        ports:
+          - "8000:8000"
+        env:
+          DJANGO_DB_HOST: locallibrary_db
+          DJANGO_DB_NAME: locallibrary
+          DJANGO_DB_USER: user
+          DJANGO_DB_PASSWORD: password
+        state: started
+        restart_policy: always
