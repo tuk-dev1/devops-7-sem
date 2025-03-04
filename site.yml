@@ -1,0 +1,48 @@
+---
+- hosts: app
+  become: yes
+  roles:
+    - docker
+  tasks:
+    - name: Start PostgreSQL container
+      community.docker.docker_container:
+        name: locallibrary_db
+        image: postgres:13
+        env:
+          POSTGRES_DB: locallibrary
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+        volumes:
+          - locallibrary_data:/var/lib/postgresql/data
+        state: started
+        restart_policy: always
+        published_ports:
+          - "5432:5432"
+
+    - name: Start Django container
+      docker_container:
+        name: locallibrary_web
+        image: timurbabs/django
+        command: python3 /app/manage.py runserver 0.0.0.0:8000
+        volumes:
+          - /tmp/django_app:/app
+        ports:
+          - "8000:8000"
+        env:
+          DJANGO_DB_HOST: locallibrary_db
+          DJANGO_DB_NAME: locallibrary
+          DJANGO_DB_USER: user
+          DJANGO_DB_PASSWORD: password
+        state: started
+        restart_policy: always
+
+- hosts: web
+  become: yes
+  roles:
+    - nginx
+
+- name: Deploy OpenVPN server
+  hosts: all
+  become: yes
+  roles:
+    - role: openvpn

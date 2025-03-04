@@ -1,0 +1,68 @@
+- name: Install OpenVPN and Easy-RSA
+  ansible.builtin.apt:
+    name:
+      - openvpn
+      - easy-rsa
+    state: present
+
+- name: Ensure Easy-RSA directory and initialize PKI
+  command:
+    cmd: "{{ item }}"
+    creates: "{{ EasyRSA_pki }}"
+  args:
+    chdir: "{{ EasyRSA }}"
+  loop:
+    - make-cadir "{{ EasyRSA }}"
+    - ./easyrsa init-pki
+
+- name: Create CA + certificates
+  shell: |
+    if [ ! -f "{{ EasyRSA_pki }}/ca.crt" ]; then
+      ./easyrsa build-ca nopass
+    fi
+    if [ ! -f "{{ EasyRSA_pki }}/issued/server.crt" ]; then
+      ./easyrsa gen-req server nopass
+      echo "yes" | ./easyrsa sign-req server server
+    fi
+    if [ ! -f "{{ EasyRSA_pki }}/dh.pem" ]; then
+      ./easyrsa gen-dh
+    fi
+    if [ ! -f "{{ EasyRSA_pki }}/ta.key" ]; then
+      openvpn --genkey --secret pki/ta.key
+    fi
+  args:
+    chdir: "{{ EasyRSA }}"
+
+- name: Check OpenVPN directory
+  file:
+    path: /etc/openvpn
+    state: directory
+    mode: '0755'
+
+- name: Copy OpenVPN files
+  copy:
+    src: "{{ item }}"
+    dest: "{{ openvpn_config }}/"
+    remote_src: yes
+  with_items:
+    - "{{ EasyRSA_pki }}/ca.crt"
+    - "{{ EasyRSA_pki }}/issued/server.crt"
+    - "{{ EasyRSA_pki }}/private/server.key"
+    - "{{ EasyRSA_pki }}/dh.pem"
+    - "{{ EasyRSA_pki }}/ta.key"
+
+- name: Apply OpenVPN config
+  template:
+    src: "{{ server_config }}"
+    dest: /etc/openvpn/server.conf
+
+- name: Start OpenVPN server
+  systemd:
+    name: openvpn@server
+    state: started
+    enabled: yes
+
+- name: Create client config
+  template:
+    src: "{{ client_config }}"
+    dest: "client.ovpn"

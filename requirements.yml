@@ -1,0 +1,17 @@
+---
+roles:
+  - name: docker
+    src: https://github.com/tuk-dev1/docker.git
+    scm: git
+    version: main
+    
+  - name: nginx
+    src: https://github.com/tuk-dev1/nginx.git
+    scm: git
+    version: main
+
+  - name: openvpn
+    src: https://github.com/tuk-dev1/openvpn.git
+    scm: git
+    version: main
+    
