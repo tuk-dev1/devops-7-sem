@@ -1,0 +1,12 @@
+---
+- hosts: app
+  become: yes
+  roles:
+    - docker
+
+- hosts: all
+  become: true
+  collections:
+    - community.postgresql
+  roles:
+    - postgresql
