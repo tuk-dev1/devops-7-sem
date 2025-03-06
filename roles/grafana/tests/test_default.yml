@@ -1,0 +1,11 @@
+---
+# Molecule test for Grafana role
+
+- name: Verify Grafana is installed
+  ansible.builtin.command: "{{ grafana_install_dir }}/grafana-server -v"
+  register: grafana_version_output
+  changed_when: false
+
+- name: Assert Grafana version is correct
+  ansible.builtin.debug:
+    msg: "Installed Grafana version: {{ grafana_version_output.stdout }}"

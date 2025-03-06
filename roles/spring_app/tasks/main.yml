@@ -1,0 +1,60 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for spring_app
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install OpenJDK 11
+  apt:
+    name: openjdk-11-jdk
+    state: present
+      
+- name: Verify Java version
+  command: java -version
+  register: java_version
+
+- name: Show Java version
+  debug:
+    msg: "{{ java_version.stderr }}"
+
+- name: Clone the application repository
+  ansible.builtin.git:
+    repo: "{{ spring_app_repo }}"
+    dest: "{{ spring_app_repo_dir }}"
+    version: main
+    force: yes
+
+- name: Build the application
+  ansible.builtin.command:
+    cmd: "./gradlew clean build"
+    chdir: "{{ spring_app_repo_dir }}"
+
+- name: Ensure application directories exist
+  ansible.builtin.file:
+    path: "{{ spring_app_install_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Copy built application JAR
+  ansible.builtin.copy:
+    src: "{{ spring_app_repo_dir }}/build/libs/{{ spring_app_jar_name }}"
+    dest: "{{ spring_app_install_dir }}/{{ spring_app_jar_name }}"
+    mode: '0644'
+    remote_src: true
+
+- name: Configure systemd service for Spring application
+  ansible.builtin.template:
+    src: spring_app.service.j2
+    dest: /etc/systemd/system/spring_app.service
+    mode: '0644'
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- name: Enable and start Spring application
+  ansible.builtin.systemd:
+    name: spring_app
+    enabled: yes
+    state: started

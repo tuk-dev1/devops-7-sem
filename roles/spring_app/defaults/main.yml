@@ -1,0 +1,12 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for spring_app
+spring_app_repo: https://github.com/grafana/spring-boot-demo.git
+spring_app_repo_dir: /tmp/spring-boot-demo
+spring_app_jar_name: demo-0.0.1-SNAPSHOT.jar
+spring_app_install_dir: /opt/spring_app
+spring_app_user: spring
+spring_app_group: spring
+
+# Порт приложения
+spring_app_port: 8080

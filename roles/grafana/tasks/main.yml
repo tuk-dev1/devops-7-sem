@@ -1,0 +1,70 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for grafana
+
+- name: Ensure required directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ grafana_data_dir }}"
+    - "/etc/grafana"
+
+- name: Download Grafana tarball
+  ansible.builtin.get_url:
+    url: "{{ grafana_download_url }}"
+    dest: "/tmp/grafana.tar.gz"
+    mode: '0644'
+
+- name: Extract Grafana tarball
+  ansible.builtin.unarchive:
+    src: "/tmp/grafana.tar.gz"
+    dest: "/tmp/"
+    remote_src: true
+
+- name: Install Grafana binaries
+  ansible.builtin.copy:
+    src: "/tmp/grafana-{{ grafana_version }}/bin/"
+    dest: "{{ grafana_install_dir }}"
+    remote_src: true
+    mode: '0755'
+
+- name: Copy default Grafana configuration
+  ansible.builtin.template:
+    src: grafana.ini.j2
+    dest: "{{ grafana_config_file }}"
+    mode: '0644'
+
+- name: Set up Grafana systemd service
+  ansible.builtin.template:
+    src: grafana.service.j2
+    dest: "/etc/systemd/system/{{ grafana_service_name }}.service"
+    mode: '0644'
+
+- name: Copy Prometheus datasource configuration
+  ansible.builtin.template:
+    src: prometheus-datasource.yml.j2
+    dest: "{{ grafana_data_dir }}/prometheus-datasource.yml"
+    mode: '0644'
+    
+- name: Copy Grafana dashboard
+  ansible.builtin.template:
+    src: dashboard.json.j2
+    dest: "{{ grafana_data_dir }}/spring-boot-metrics.json"
+    mode: '0644'
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Enable and start Grafana
+  ansible.builtin.systemd:
+    name: "{{ grafana_service_name }}"
+    enabled: true
+    state: started
+
+- name: Restart Grafana service to apply new configuration
+  ansible.builtin.systemd:
+    name: "{{ grafana_service_name }}"
+    state: restarted

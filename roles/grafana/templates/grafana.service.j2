@@ -1,0 +1,13 @@
+[Unit]
+Description=Grafana instance
+After=network.target
+
+[Service]
+User=grafana
+Group=grafana
+ExecStart={{ grafana_install_dir }}/grafana-server --config={{ grafana_config_file }}
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

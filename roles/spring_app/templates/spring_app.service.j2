@@ -1,0 +1,13 @@
+[Unit]
+Description=Spring Boot Application
+After=network.target
+
+[Service]
+User={{ spring_app_user }}
+Group={{ spring_app_group }}
+ExecStart=/usr/bin/java -jar {{ spring_app_install_dir }}/{{ spring_app_jar_name }}
+Restart=always
+Environment=SPRING_PROFILES_ACTIVE=prod
+
+[Install]
+WantedBy=multi-user.target

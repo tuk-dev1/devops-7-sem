@@ -1,0 +1,12 @@
+galaxy_info:
+  role_name: spring_app
+  namespace: itmoment
+  author: alexander
+  description: Install and configure Spring app
+  license: MIT
+  min_ansible_version: "2.9"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy

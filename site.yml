@@ -1,0 +1,34 @@
+--- 
+- hosts: app
+  become: yes
+  roles: 
+    - spring_app
+
+- hosts: monitoring
+  become: yes
+  roles:
+    - loki
+    - grafana
+    - prometheus
+
+- name: Install monitoring services
+  hosts: monitoring
+  become: yes
+  tasks:
+    - name: Ensure Prometheus service is running
+      systemd:
+        name: prometheus
+        state: started
+        enabled: yes
+
+    - name: Ensure Grafana service is running
+      systemd:
+        name: grafana.service
+        state: started
+        enabled: yes
+
+    - name: Ensure Loki service is running
+      systemd:
+        name: loki
+        state: started
+        enabled: yes

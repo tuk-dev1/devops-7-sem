@@ -1,0 +1,56 @@
+#SPDX-License-Identifier: MIT-0
+---
+- name: Ensure unzip is installed
+  ansible.builtin.package:
+    name: unzip
+    state: present
+
+- name: Ensure required directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ loki_install_dir }}"
+    - "{{ loki_config_dir }}"
+    - "{{ loki_data_dir }}"
+
+- name: Download Loki binary
+  ansible.builtin.get_url:
+    url: "{{ loki_download_url }}"
+    dest: /tmp/loki-linux-amd64.zip
+    mode: '0644'
+
+- name: Unzip Loki binary
+  ansible.builtin.unarchive:
+    src: /tmp/loki-linux-amd64.zip
+    dest: "{{ loki_install_dir }}"
+    remote_src: yes
+    extra_opts: []
+
+- name: Set permissions for Loki binary
+  ansible.builtin.file:
+    path: "{{ loki_install_dir }}/loki-linux-amd64"
+    mode: '0755'
+
+- name: Install Loki configuration file
+  ansible.builtin.template:
+    src: loki-config.yml.j2
+    dest: "{{ loki_config_file }}"
+    mode: '0644'
+
+- name: Configure systemd service for Loki
+  ansible.builtin.template:
+    src: loki.service.j2
+    dest: /etc/systemd/system/loki.service
+    mode: '0644'
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- name: Enable and start Loki service
+  ansible.builtin.systemd:
+    name: loki
+    enabled: yes
+    state: started

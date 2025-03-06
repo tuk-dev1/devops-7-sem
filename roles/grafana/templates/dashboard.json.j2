@@ -1,0 +1,22 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "spring-boot-metrics",
+    "title": "Spring Boot Metrics",
+    "tags": ["spring-boot", "prometheus"],
+    "panels": [
+      {
+        "type": "graph",
+        "title": "JVM Memory Usage",
+        "targets": [
+          {
+            "expr": "jvm_memory_bytes_used",
+            "refId": "A"
+          }
+        ],
+        "datasource": "Prometheus"
+      }
+    ]
+  },
+  "overwrite": true
+}
